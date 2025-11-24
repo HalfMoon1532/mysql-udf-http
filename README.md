@@ -8,6 +8,9 @@ MySQL User-defined function (UDF) for HTTP REST
 - 携带了mysql5.7.42的库文件和dockerfile
 - 修改构建方式为CMake
 
+🌟🌟🌟
+切记，这份http实现，一行sql只能执行一次http，否则会造成内存泄漏
+
 **Note:** It is a fork repository. Original Website is below.  
 http://code.google.com/p/mysql-udf-http
 
