@@ -1,0 +1,20 @@
+services:
+  mysql:
+    container_name: mysql-udf-http
+    image: mysql-with-http:5.7.42 
+    restart: always
+    ports:
+      - "13306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=your-passwd
+    volumes:
+      - ./mysql:/var/lib/mysql
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2048M
+    networks:
+      - mysql-net
+networks:
+  mysql-net:

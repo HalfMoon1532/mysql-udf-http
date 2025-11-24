@@ -3,6 +3,11 @@ MySQL User-defined function (UDF) for HTTP GET/POST
 
 MySQL User-defined function (UDF) for HTTP REST
 
+## Update
+- 修复了一个释放未初始化指针导致数据库崩溃的问题
+- 携带了mysql5.7.42的库文件和dockerfile
+- 修改构建方式为CMake
+
 **Note:** It is a fork repository. Original Website is below.  
 http://code.google.com/p/mysql-udf-http
 

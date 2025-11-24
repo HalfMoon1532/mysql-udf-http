@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include "mysql-udf-http.h"
-
 my_bool http_get_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
 char *http_get(UDF_INIT *initid, UDF_ARGS *args, char *result, unsigned long *length, char *is_null, char *error);
 void http_get_deinit(UDF_INIT *initid);
@@ -21,7 +20,6 @@ void http_put_deinit(UDF_INIT *initid);
 my_bool http_delete_init(UDF_INIT *initid, UDF_ARGS *args, char *message);
 char *http_delete(UDF_INIT *initid, UDF_ARGS *args, char *result, unsigned long *length, char *is_null, char *error);
 void http_delete_deinit(UDF_INIT *initid);
-
 static void *myrealloc(void *ptr, size_t size)
 {
   /* There might be a realloc() out there that doesn't like reallocing
@@ -35,15 +33,15 @@ static void *myrealloc(void *ptr, size_t size)
 static size_t
 result_cb(void *ptr, size_t size, size_t nmemb, void *data)
 {
-  size_t realsize= size * nmemb;
-  struct st_curl_results *res= (struct st_curl_results *)data;
+  size_t realsize = size * nmemb;
+  struct st_curl_results *res = (struct st_curl_results *)data;
 
-  res->result= (char *)myrealloc(res->result, res->size + realsize + 1);
+  res->result = (char *)myrealloc(res->result, res->size + realsize + 1);
   if (res->result)
   {
     memcpy(&(res->result[res->size]), ptr, realsize);
     res->size += realsize;
-    res->result[res->size]= 0;
+    res->result[res->size] = 0;
   }
   return realsize;
 }
@@ -62,31 +60,31 @@ my_bool http_get_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
     return 1;
   }
 
-  args->arg_type[0]= STRING_RESULT;
+  args->arg_type[0] = STRING_RESULT;
 
-  initid->max_length= CURL_UDF_MAX_SIZE;
-  container= (st_curl_results *)malloc(sizeof(st_curl_results));
-
-  initid->ptr= (char *)container;
+  initid->max_length = CURL_UDF_MAX_SIZE;
+  container = (st_curl_results *)malloc(sizeof(st_curl_results));
+  container->result = NULL;
+  initid->ptr = (char *)container;
 
   return 0;
 }
 
 char *http_get(UDF_INIT *initid, UDF_ARGS *args,
-                __attribute__ ((unused)) char *result,
+               __attribute__((unused)) char *result,
                unsigned long *length,
-                __attribute__ ((unused)) char *is_null,
-                __attribute__ ((unused)) char *error)
+               __attribute__((unused)) char *is_null,
+               __attribute__((unused)) char *error)
 {
   CURLcode retref;
   CURL *curl;
-  st_curl_results *res= (st_curl_results *)initid->ptr;
+  st_curl_results *res = (st_curl_results *)initid->ptr;
 
-  curl_global_init(CURL_GLOBAL_ALL);
-  curl= curl_easy_init();
+  // curl_global_init(CURL_GLOBAL_ALL);
+  curl = curl_easy_init();
 
-  res->result= NULL;
-  res->size= 0;
+  res->result = NULL;
+  res->size = 0;
 
   if (curl)
   {
@@ -94,26 +92,27 @@ char *http_get(UDF_INIT *initid, UDF_ARGS *args,
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, result_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)res);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "mysql-udf-http/1.0");
-    retref= curl_easy_perform(curl);
-    if (retref) {
+    retref = curl_easy_perform(curl);
+    if (retref)
+    {
       fprintf(stderr, "error\n");
-      if (res->result) 
-        strcpy(res->result,"");
+      if (res->result)
+        strcpy(res->result, "");
       res->size = 0;
     }
   }
   curl_easy_cleanup(curl);
-  *length= res->size;
-  return ((char *) res->result);
+  *length = res->size;
+  return ((char *)res->result);
 }
 
 void http_get_deinit(UDF_INIT *initid)
 {
   /* if we allocated initid->ptr, free it here */
-  st_curl_results *res= (st_curl_results *)initid->ptr;
+  st_curl_results *res = (st_curl_results *)initid->ptr;
 
   if (res->result)
-        free(res->result);
+    free(res->result);
   free(res);
   return;
 }
@@ -122,8 +121,9 @@ void http_get_deinit(UDF_INIT *initid)
 
 my_bool http_post_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
 {
+  fprintf(stderr, "\nhttp_post_init\n");
+  fprintf(stderr, "initid = %p\n", initid);
   st_curl_results *container;
-
   if (args->arg_count != 2)
   {
     strncpy(message,
@@ -132,63 +132,77 @@ my_bool http_post_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
     return 1;
   }
 
-  args->arg_type[0]= STRING_RESULT;
+  args->arg_type[0] = STRING_RESULT;
 
-  initid->max_length= CURL_UDF_MAX_SIZE;
-  container= (st_curl_results *)malloc(sizeof(st_curl_results));
+  initid->max_length = CURL_UDF_MAX_SIZE;
+  container = (st_curl_results *)malloc(sizeof(st_curl_results));
+  fprintf(stderr, "st_curl_results init addr %p\n", container);
+  container->result = NULL;
 
-  initid->ptr= (char *)container;
+  initid->ptr = (char *)container;
 
   return 0;
 }
 
 char *http_post(UDF_INIT *initid, UDF_ARGS *args,
-                __attribute__ ((unused)) char *result,
-               unsigned long *length,
-                __attribute__ ((unused)) char *is_null,
-                __attribute__ ((unused)) char *error)
+                __attribute__((unused)) char *result,
+                unsigned long *length,
+                __attribute__((unused)) char *is_null,
+                __attribute__((unused)) char *error)
 {
+  fprintf(stderr, "\nhttp_post\n");
+  fprintf(stderr, "initid = %p\n", initid);
   CURLcode retref;
   CURL *curl;
-  st_curl_results *res= (st_curl_results *)initid->ptr;
+  st_curl_results *res = (st_curl_results *)initid->ptr;
 
-  curl_global_init(CURL_GLOBAL_ALL);
-  curl= curl_easy_init();
+  // curl_global_init(CURL_GLOBAL_ALL);
+  curl = curl_easy_init();
 
-  res->result= NULL;
-  res->size= 0;
+  res->result = NULL;
+  res->size = 0;
 
+  fprintf(stderr, "curl init status %p\n", curl);
   if (curl)
   {
     struct curl_slist *chunk = NULL;
-    chunk = curl_slist_append(chunk, "Expect:");  
-  
+    chunk = curl_slist_append(chunk, "Expect:");
+
     curl_easy_setopt(curl, CURLOPT_URL, args->args[0]);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, result_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)res);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "mysql-udf-http/1.0");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, args->args[1]);
-    retref= curl_easy_perform(curl);
-    if (retref) {
+    retref = curl_easy_perform(curl);
+    fprintf(stderr, "curl perform res retref %d\n", retref);
+    if (retref)
+    {
       fprintf(stderr, "error\n");
       if (res->result)
-        strcpy(res->result,"");
+        strcpy(res->result, "");
       res->size = 0;
     }
   }
   curl_easy_cleanup(curl);
-  *length= res->size;
-  return ((char *) res->result);
+  *length = res->size;
+  fprintf(stderr, "res length %ld\n", *length);
+  return ((char *)res->result);
 }
 
 void http_post_deinit(UDF_INIT *initid)
 {
+  fprintf(stderr, "\nhttp_post_deinit\n");
+  fprintf(stderr, "initid = %p\n", initid);
   /* if we allocated initid->ptr, free it here */
-  st_curl_results *res= (st_curl_results *)initid->ptr;
-
+  st_curl_results *res = (st_curl_results *)initid->ptr;
+  fprintf(stderr, "st_curl_results addr %p\n", res);
   if (res->result)
+  {
+    fprintf(stderr, "free(res->result %p)\n", res->result);
     free(res->result);
+  }
+  fprintf(stderr, "free(res) %p\n", res);
   free(res);
   return;
 }
@@ -207,37 +221,37 @@ my_bool http_put_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
     return 1;
   }
 
-  args->arg_type[0]= STRING_RESULT;
+  args->arg_type[0] = STRING_RESULT;
 
-  initid->max_length= CURL_UDF_MAX_SIZE;
-  container= (st_curl_results *)malloc(sizeof(st_curl_results));
-
-  initid->ptr= (char *)container;
+  initid->max_length = CURL_UDF_MAX_SIZE;
+  container = (st_curl_results *)malloc(sizeof(st_curl_results));
+  container->result = NULL;
+  initid->ptr = (char *)container;
 
   return 0;
 }
 
 char *http_put(UDF_INIT *initid, UDF_ARGS *args,
-                __attribute__ ((unused)) char *result,
+               __attribute__((unused)) char *result,
                unsigned long *length,
-                __attribute__ ((unused)) char *is_null,
-                __attribute__ ((unused)) char *error)
+               __attribute__((unused)) char *is_null,
+               __attribute__((unused)) char *error)
 {
   CURLcode retref;
   CURL *curl;
-  st_curl_results *res= (st_curl_results *)initid->ptr;
+  st_curl_results *res = (st_curl_results *)initid->ptr;
 
   curl_global_init(CURL_GLOBAL_ALL);
-  curl= curl_easy_init();
+  curl = curl_easy_init();
 
-  res->result= NULL;
-  res->size= 0;
+  res->result = NULL;
+  res->size = 0;
 
   if (curl)
   {
     struct curl_slist *chunk = NULL;
-    chunk = curl_slist_append(chunk, "Expect:");  
-  
+    chunk = curl_slist_append(chunk, "Expect:");
+
     curl_easy_setopt(curl, CURLOPT_URL, args->args[0]);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, result_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)res);
@@ -245,23 +259,24 @@ char *http_put(UDF_INIT *initid, UDF_ARGS *args,
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, args->args[1]);
-    retref= curl_easy_perform(curl);
-    if (retref) {
+    retref = curl_easy_perform(curl);
+    if (retref)
+    {
       fprintf(stderr, "error\n");
       if (res->result)
-        strcpy(res->result,"");
+        strcpy(res->result, "");
       res->size = 0;
     }
   }
   curl_easy_cleanup(curl);
-  *length= res->size;
-  return ((char *) res->result);
+  *length = res->size;
+  return ((char *)res->result);
 }
 
 void http_put_deinit(UDF_INIT *initid)
 {
   /* if we allocated initid->ptr, free it here */
-  st_curl_results *res= (st_curl_results *)initid->ptr;
+  st_curl_results *res = (st_curl_results *)initid->ptr;
 
   if (res->result)
     free(res->result);
@@ -283,56 +298,57 @@ my_bool http_delete_init(UDF_INIT *initid, UDF_ARGS *args, char *message)
     return 1;
   }
 
-  args->arg_type[0]= STRING_RESULT;
+  args->arg_type[0] = STRING_RESULT;
 
-  initid->max_length= CURL_UDF_MAX_SIZE;
-  container= (st_curl_results *)malloc(sizeof(st_curl_results));
-
-  initid->ptr= (char *)container;
+  initid->max_length = CURL_UDF_MAX_SIZE;
+  container = (st_curl_results *)malloc(sizeof(st_curl_results));
+  container->result = NULL;
+  initid->ptr = (char *)container;
 
   return 0;
 }
 
 char *http_delete(UDF_INIT *initid, UDF_ARGS *args,
-                __attribute__ ((unused)) char *result,
-               unsigned long *length,
-                __attribute__ ((unused)) char *is_null,
-                __attribute__ ((unused)) char *error)
+                  __attribute__((unused)) char *result,
+                  unsigned long *length,
+                  __attribute__((unused)) char *is_null,
+                  __attribute__((unused)) char *error)
 {
   CURLcode retref;
   CURL *curl;
-  st_curl_results *res= (st_curl_results *)initid->ptr;
+  st_curl_results *res = (st_curl_results *)initid->ptr;
 
   curl_global_init(CURL_GLOBAL_ALL);
-  curl= curl_easy_init();
+  curl = curl_easy_init();
 
-  res->result= NULL;
-  res->size= 0;
+  res->result = NULL;
+  res->size = 0;
 
   if (curl)
-  { 
+  {
     curl_easy_setopt(curl, CURLOPT_URL, args->args[0]);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, result_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)res);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "mysql-udf-http/1.0");
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-    retref= curl_easy_perform(curl);
-    if (retref) {
+    retref = curl_easy_perform(curl);
+    if (retref)
+    {
       fprintf(stderr, "error\n");
       if (res->result)
-        strcpy(res->result,"");
+        strcpy(res->result, "");
       res->size = 0;
     }
   }
   curl_easy_cleanup(curl);
-  *length= res->size;
-  return ((char *) res->result);
+  *length = res->size;
+  return ((char *)res->result);
 }
 
 void http_delete_deinit(UDF_INIT *initid)
 {
   /* if we allocated initid->ptr, free it here */
-  st_curl_results *res= (st_curl_results *)initid->ptr;
+  st_curl_results *res = (st_curl_results *)initid->ptr;
 
   if (res->result)
     free(res->result);
